@@ -19,40 +19,38 @@ class OrderController extends Controller
 
     public function store(Request $request, $cartid)
     {
-        $data = $request->data;
-        $data = base64_decode($data);
-        $data = json_decode($data);
-        if ($data->status == 'completed') {
-            //store order here
-            $cart = Cart::find($cartid);
-            $product = Product::find($cart->product_id);
-            if ($cart->qty > $product->stock) {
-                return back()->with('success', 'Product is out of stock');
-            }
+        $cart = cart::find($cartid);
 
-            // and if the product stock is 0 or less than the quantity ordered by the user, then return back with a message  'Product is out of stock'
+        //fetch the product details from the cart
+        $product = product::find($cart->product_id);
 
-
-
-
-            $data = [
-                'user_id' => $cart->user_id,
-                'product_id' => $cart->product_id,
-                'qty' => $cart->qty,
-                'price' => $cart->product->price,
-                'payment_method' => 'Esewa',
-                'name' => $cart->user->name,
-                'phone' => $cart->user->phone,
-                'address' => $cart->user->address,
-            ];
-            Order::create($data);
-            $product->stock = (int)$product->stock - $cart->qty;
-            $product->save();
-
-            $cart->delete();
-            return redirect(route('homepage'))->with('success', 'Order placed successfully');
+        //check if the product is out of stock
+        if ($cart->qty > $product->stock) {
+            return back()->with('sucess', 'Product is out of stock');
         }
+
+        $data = [
+            'user_id' => $cart->user_id,
+            'product_id' => $cart->product_id,
+            'qty' => $cart->qty,
+            'price' => $cart->product->price,
+            'payment_method' => 'Online',
+            'name' => $cart->user->name,
+            'phone' => $cart->user->phone,
+            'address' => $cart->user->address,
+        ];
+
+        order::create($data);
+
+        //decrease the stock of the product
+        //update the stock of the product
+        $product->stock = (int)$product->stock - $cart->qty;
+        $product->save();
+
+        $cart->delete();
+        return redirect()->route('homepage')->with('success', 'Order Placed Successfully');
     }
+
 
     public function storecod(Request $request)
     {
